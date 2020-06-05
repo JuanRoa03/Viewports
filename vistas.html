@@ -1,0 +1,753 @@
+ <!DOCTYPE html>
+<html>
+  <head>
+    <title>vistas</title>
+    <style>
+      html, body { margin: 0; padding: 0; overflow: hidden; }
+    </style>
+  </head>
+  <body>
+    <script src="js/three.js"></script>
+    <script src="js/controls/OrbitControls.js"></script>
+    <script src='js/libs/dat.gui.min.js'></script>
+    <script>
+		var scene, aspect, camera, camera2, renderer, controls;
+        var mapWidth = 320, mapHeight = 240;
+        var w = window.innerWidth, h = window.innerHeight;
+        var frustumSize = 5;
+		var startTime = Date.now();
+		
+		init();
+		animate();
+	
+		function init(){
+			scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0xAAAAAA );
+			aspect = window.innerWidth / window.innerHeight;
+			camera = new THREE.PerspectiveCamera( 45, aspect, 0.1, 1000);
+			renderer = new THREE.WebGLRenderer({antialias: true});
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+			controls = new THREE.OrbitControls( camera, renderer.domElement );
+            
+			var size = 10;
+			var arrowSize = 1;
+			var divisions = size;
+			var origin = new THREE.Vector3( 0, 0, 0 );
+			var x = new THREE.Vector3( 1, 0, 0 );
+			var y = new THREE.Vector3( 0, 1, 0 );
+		  	var z = new THREE.Vector3( 0, 0, 1 );
+			var color1 = new THREE.Color( 0xFFFFFF );
+		  	var color2 = new THREE.Color( 0x333333 );
+		  	var colorR = new THREE.Color( 0xAA3333 );
+		  	var colorG = new THREE.Color( 0x33AA33 );
+		  	var colorB = new THREE.Color( 0x333366 );
+		  
+		  	//CREAR LAS GRILLAS PARA EL ESCENARIO
+		  	var axesHelper = new THREE.AxesHelper( size );
+		  	var gridHelperXY = new THREE.GridHelper( size, divisions, color1, color1);
+		  	var gridHelperXZ = new THREE.GridHelper( size, divisions, color2, color2 );
+		  	var gridHelperYZ = new THREE.GridHelper( size, divisions, color2, color2 );
+            
+            //ROTARLAS PARA QUE QUEDEN EN EL ESPACIO ADECUADO
+            gridHelperXY.rotateOnWorldAxis ( x, THREE.Math.degToRad(90) );
+            gridHelperXZ.rotateOnWorldAxis ( y, THREE.Math.degToRad(90) );
+            gridHelperYZ.rotateOnWorldAxis ( z, THREE.Math.degToRad(90) );
+            
+            //CREAR LAS FLECHAS QUE INDICAN LOS EJES DE COORDENADAS 3D
+            var arrowX = new THREE.ArrowHelper( x, origin, arrowSize, colorR );
+            var arrowY = new THREE.ArrowHelper( y, origin, arrowSize, colorG );
+            var arrowZ = new THREE.ArrowHelper( z, origin, arrowSize, colorB );
+            
+            //CREAR ILUMINACIÓN
+            var ambient = new THREE.AmbientLight( 0xffffff, 2 );
+            scene.add( ambient );
+            
+            var pointLight = new THREE.PointLight( 0xffffff, 1, 100 );
+            pointLight.position.set( 5, 5, -5 );
+            scene.add( pointLight );
+            
+			//CREAR LAS GEOMETRÍAS
+			//Far plane
+			var width = 16.0;
+			var height = 9.0;
+			var FOV = 45.0;			//Ángulo de apertura
+			var sinFOV = Math.sin((FOV/2.0)*Math.PI/180.0);
+			var aR = width/height;	//AspectRatio
+			var nearZ = 1;
+			var farZ = 10;
+			var COA = new THREE.Vector3(-5,2,0);
+			var planeGeometry = new THREE.PlaneGeometry(width, height);
+            
+            camera2 = new THREE.OrthographicCamera( frustumSize * aspect / - 2,  //left — Camera frustum left plane.
+                                                    frustumSize * aspect / 2,    //right — Camera frustum right plane.
+                                                    frustumSize / 2,             //top — Camera frustum top plane.
+                                                    frustumSize / - 2,           //bottom — Camera frustum bottom plane.
+                                                    1,                           //near — Camera frustum near plane.
+                                                    10 );
+            var helper = new THREE.CameraHelper( camera2 );
+            scene.add( helper );
+
+            camera4 = new THREE.OrthographicCamera( frustumSize * aspect / - 2,  //left — Camera frustum left plane.
+                                                    frustumSize * aspect / 2,    //right — Camera frustum right plane.
+                                                    frustumSize / 2,             //top — Camera frustum top plane.
+                                                    frustumSize / - 2,           //bottom — Camera frustum bottom plane.
+                                                    1,                           //near — Camera frustum near plane.
+                                                    10 );
+            var helper3 = new THREE.CameraHelper( camera4 );
+            scene.add( helper3 );
+
+            camera5 = new THREE.OrthographicCamera( frustumSize * aspect / - 2,  //left — Camera frustum left plane.
+                                                    frustumSize * aspect / 2,    //right — Camera frustum right plane.
+                                                    frustumSize / 2,             //top — Camera frustum top plane.
+                                                    frustumSize / - 2,           //bottom — Camera frustum bottom plane.
+                                                    1,                           //near — Camera frustum near plane.
+                                                    10 );
+            var helper4 = new THREE.CameraHelper( camera5 );
+            scene.add( helper4 );
+
+            camera3 = new THREE.PerspectiveCamera( FOV, aR, nearZ, farZ );
+            var helper2 = new THREE.CameraHelper( camera3 );
+            scene.add( helper2 );
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+			
+			//CUBO EN EL ESPACIO
+			var boxGeometry = new THREE.BoxGeometry(1,2,1);
+				
+            //CREAR LOS MATERIALES
+            var material1 = new THREE.MeshStandardMaterial( { color: 0xAA3333, metalness: 0.5, roughness: 0.1 } );
+            var material2 = new THREE.MeshStandardMaterial( { color: 0x33AA33, metalness: 0.5, roughness: 0.1 } );
+            var material3 = new THREE.MeshStandardMaterial( { color: 0x3333AA, metalness: 0.5, roughness: 0.1 } );
+			
+			//CREAR LOS OBJETOS
+            //scene.add( gridHelperXY );
+            //scene.add( gridHelperXZ );
+            scene.add( arrowX );
+            scene.add( arrowY );
+            scene.add( arrowZ );
+//BASE
+	var geobase = new THREE.Geometry();
+            
+
+	var res = 20;
+ 
+	var j =-20;
+	var i= -20; 
+	var k= 0 
+ 	while (k!= 0.5){        
+		while (i!= res){
+			while (j!= res){              
+                    
+ 				var punto = new THREE.Vector3();
+                    
+				punto.x = j ;
+                    
+				punto.y = k ;
+                    
+				punto.z =  i;
+
+
+				j=j+0.5;  
+				geobase.vertices.push( punto );
+				}
+
+			j=-20;
+			i=i +0.5;            
+			}
+
+		i=-20;
+		k=k+0.1;
+		}
+			
+			
+	//CREAR LOS MATERIALES            
+			
+	var matPunto = new THREE.PointsMaterial( { color: 0x891111, size: 0.5 } );
+			
+			
+	//CREAR LOS OBJETOS
+			
+	var BASE = new THREE.Points( geobase, matPunto )
+	scene.add( BASE );
+////////////////////////
+//
+   var geobase2 = new THREE.Geometry();
+            
+
+	var res = 15;
+ 
+	var j =-15;
+	var i= -15; 
+	var k= 0
+ 	while (k!= 0.5){        
+		while (i!= res){
+			while (j!= res){              
+                    
+ 				var punto = new THREE.Vector3();
+                    
+				punto.x = j ;
+                    
+				punto.y = k ;
+                    
+				punto.z =  i;
+
+
+				j=j+0.5;  
+				geobase2.vertices.push( punto );
+				}
+
+			j=-20;
+			i=i +0.5;            
+			}
+
+		i=-20;
+		k=k+0.1;
+		}
+			
+			
+	//CREAR LOS MATERIALES            
+			
+	var matPunto5 = new THREE.PointsMaterial( { color: 0x9B1414, size: 0.5 } );
+			
+			
+	//CREAR LOS OBJETOS
+			
+	var BASE2 = new THREE.Points( geobase2, matPunto5 )
+        BASE2.position.y=0.75;
+	BASE2.position.z= 0.25;
+	BASE2.position.x=2.5;
+	scene.add( BASE2 );
+        var BASE3 = new THREE.Points( geobase2, matPunto5 )
+        BASE3.position.y=1.5;
+	BASE3.position.z= 0.25;
+	BASE3.position.x=2.5;
+	scene.add( BASE3 );
+		
+	var BASE4 = new THREE.Points( geobase2, matPunto5 )
+        BASE4.position.y=2.25;
+	BASE4.position.z= 0.25;
+	BASE4.position.x=2.5;
+	scene.add( BASE4 );
+
+////////////////////////////////////////////////////////////////
+
+	 var geobase3 = new THREE.Geometry();
+            
+
+	var res = 10;
+ 
+	var j =-10;
+	var i= -10; 
+	var k= 0
+ 	while (k!= 0.5){        
+		while (i!= res){
+			while (j!= res){              
+                    
+ 				var punto = new THREE.Vector3();
+                    
+				punto.x = j ;
+                    
+				punto.y = k ;
+                    
+				punto.z =  i;
+
+
+				j=j+0.5;  
+				geobase3.vertices.push( punto );
+				}
+
+			j=-20;
+			i=i +0.5;            
+			}
+
+		i=-20;
+		k=k+0.1;
+		}
+			
+			
+	//CREAR LOS MATERIALES            
+			
+	var matPunto4 = new THREE.PointsMaterial( { color: 0xAF1717, size: 0.5 } );
+            
+           var BASE5 = new THREE.Points( geobase3, matPunto4 )
+        BASE5.position.y=3;
+	BASE5.position.z= 0.25;
+	BASE5.position.x=5.25;
+	scene.add( BASE5 );
+
+        var BASE6 = new THREE.Points( geobase3, matPunto4 )
+        BASE6.position.y=3.75;
+	BASE6.position.z= 0.25;
+	BASE6.position.x=5.25;
+	scene.add( BASE6 );
+
+        var BASE7 = new THREE.Points( geobase3, matPunto4 )
+        BASE7.position.y=4.5;
+	BASE7.position.z= 0.25;
+	BASE7.position.x=5.25;
+	scene.add( BASE7 );
+//////////////////////////////////////////////////////////////////
+       var geobase4 = new THREE.Geometry();
+            
+
+	var res = 5;
+ 
+	var j =-5;
+	var i= -5; 
+	var k= 0
+ 	while (k!= 0.5){        
+		while (i!= res){
+			while (j!= res){              
+                    
+ 				var punto = new THREE.Vector3();
+                    
+				punto.x = j ;
+                    
+				punto.y = k ;
+                    
+				punto.z =  i;
+
+
+				j=j+0.5;  
+				geobase4.vertices.push( punto );
+				}
+
+			j=-20;
+			i=i +0.5;            
+			}
+
+		i=-20;
+		k=k+0.1;
+		}
+			
+			
+	//CREAR LOS MATERIALES            
+			
+	var matPunto3 = new THREE.PointsMaterial( { color: 0xBF1818 , size: 0.5 } );
+            
+           var BASE8 = new THREE.Points( geobase4, matPunto3 )
+        BASE8.position.y=5.25;
+	BASE8.position.z= 0.25;
+	BASE8.position.x=7.5;
+	scene.add( BASE8 );
+        var BASE9 = new THREE.Points( geobase4, matPunto3 )
+        BASE9.position.y=6;
+	BASE9.position.z= 0.25;
+	BASE9.position.x=7.5;
+	scene.add( BASE9 );
+        var BASE10 = new THREE.Points( geobase4, matPunto3 )
+        BASE10.position.y=6.75;
+	BASE10.position.z= 0.25;
+	BASE10.position.x=7.5;
+	scene.add( BASE10 );
+//////////////////////////////////////////////////////////////////////////////////
+        var geocilindro1 = new THREE.Geometry();
+            
+
+	var res = 25;
+ 
+	var anch = 1.1;
+	var j =0; 
+	var k= 0; 
+ 	while (k!= 20){        
+			while (j!= 25){              
+                    
+ 				var punto = new THREE.Vector3();
+                    
+				punto.x = anch * Math.cos((j*2*Math.PI)/res) ;
+                    
+				punto.y = k;
+                    
+				punto.z = anch * Math.sin((j*2*Math.PI)/res);
+
+
+				j=j+0.5;  
+				geocilindro1.vertices.push( punto );
+				}
+
+
+			j= 0;
+			k= k + 0.5;
+			anch= anch ;
+			}
+			
+			
+	//CREAR LOS MATERIALES            
+			
+	var matPunto = new THREE.PointsMaterial( { color: 0xE21C1C, size: 0.1 } );
+			
+			
+	//CREAR LOS OBJETOS
+			
+	var CILINDRO1 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO1.position.y=6.25;
+	CILINDRO1.position.z= 0;
+	CILINDRO1.position.x= -10.75;
+	scene.add( CILINDRO1);
+
+        var CILINDRO2 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO2.position.y=6.25;
+	CILINDRO2.position.z= -5;
+	CILINDRO2.position.x= -10.75;
+	scene.add( CILINDRO2);
+
+        var CILINDRO3 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO3.position.y=6.25;
+	CILINDRO3.position.z= -9;
+	CILINDRO3.position.x= -10.75;
+	scene.add( CILINDRO3);
+
+        var CILINDRO4 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO4.position.y=6.25;
+	CILINDRO4.position.z= -13;
+	CILINDRO4.position.x= -10.75;
+	scene.add( CILINDRO4);
+
+        var CILINDRO5 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO5.position.y=6.25;
+	CILINDRO5.position.z= -17;
+	CILINDRO5.position.x= -10.75;
+	scene.add( CILINDRO5);
+
+
+
+//////////////////////////////////////////
+        var CILINDRO6 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO6.position.y=6.25;
+	CILINDRO6.position.z= 0;
+	CILINDRO6.position.x= 10.75;
+	scene.add( CILINDRO6);
+
+        var CILINDRO7 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO7.position.y=6.25;
+	CILINDRO7.position.z= -5;
+	CILINDRO7.position.x= 10.75;
+	scene.add( CILINDRO7);
+
+        var CILINDRO8 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO8.position.y=6.25;
+	CILINDRO8.position.z= -9;
+	CILINDRO8.position.x= 10.75;
+	scene.add( CILINDRO8);
+
+        var CILINDRO9 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO9.position.y=6.25;
+	CILINDRO9.position.z= -13;
+	CILINDRO9.position.x= 10.75;
+	scene.add( CILINDRO9);
+
+        var CILINDRO10 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO10.position.y=6.25;
+	CILINDRO10.position.z= -17;
+	CILINDRO10.position.x= 10.75;
+	scene.add( CILINDRO10);
+
+////////////////////////////////////////////////
+
+        var CILINDRO11 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO11.position.y=6.25;
+	CILINDRO11.position.z= -17;
+	CILINDRO11.position.x= 6;
+	scene.add( CILINDRO11);
+
+        var CILINDRO12 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO12.position.y=6.25;
+	CILINDRO12.position.z= -17;
+	CILINDRO12.position.x= -6;
+	scene.add( CILINDRO12);
+
+        var CILINDRO13 = new THREE.Points( geocilindro1, matPunto )
+	CILINDRO13.position.y=6.25;
+	CILINDRO13.position.z= -17;
+	CILINDRO13.position.x= 0;
+	scene.add( CILINDRO13);
+  
+  /////////////////////////////////////////////////////
+        var geobase5 = new THREE.Geometry();
+            
+
+	var res = 5;
+ 
+	var j =-4;
+	var i= -4; 
+	var k= 0
+ 	while (k!= 0.5){        
+		while (i!= res){
+			while (j!= res){              
+                    
+ 				var punto = new THREE.Vector3();
+                    
+				punto.x = j ;
+                    
+				punto.y = k ;
+                    
+				punto.z =  i;
+
+
+				j=j+0.5;  
+				geobase5.vertices.push( punto );
+				}
+
+			j=-20;
+			i=i +0.5;            
+			}
+
+		i=-20;
+		k=k+0.1;
+		}
+			
+			
+	//CREAR LOS MATERIALES            
+			
+	var matPunto4 = new THREE.PointsMaterial( { color: 0xEF1F1F , size: 0.5 } );
+            
+           var BASE11 = new THREE.Points( geobase5, matPunto4 )
+        BASE11.position.y=24.25;
+	BASE11.position.z= 0.25;
+	BASE11.position.x=7.5;
+	scene.add( BASE11 );
+        var BASE12 = new THREE.Points( geobase5, matPunto4 )
+        BASE12.position.y=25;
+	BASE12.position.z= 0.25;
+	BASE12.position.x=7.5;
+	scene.add( BASE12 );
+        var BASE13 = new THREE.Points( geobase5, matPunto4 )
+        BASE13.position.y=25.75;
+	BASE13.position.z= 0.25;
+	BASE13.position.x=7.5;
+	scene.add( BASE13 );
+var BASE14 = new THREE.Points( geobase5, matPunto4 )
+        BASE14.position.y=26.5;
+	BASE14.position.z= 0.25;
+	BASE14.position.x=7.5;
+	scene.add( BASE14 );
+var BASE15 = new THREE.Points( geobase5, matPunto4 )
+        BASE15.position.y=27.25;
+	BASE15.position.z= 0.25;
+	BASE15.position.x=7.5;
+	scene.add( BASE15 );
+var BASE16 = new THREE.Points( geobase5, matPunto4 )
+        BASE16.position.y=28;
+	BASE16.position.z= 0.25;
+	BASE16.position.x=7.5;
+	scene.add( BASE16 );
+//////////////////////////////////////////////////////////
+		var circleGeometry3 = new THREE.Geometry();
+		var re = 270;
+		var re2 = 360;
+
+		for(var j=-270; j<re; j++){
+  		     for(var i=-360; i<re2; i++){
+         		var punto = new THREE.Vector3();
+				punto.y= 8 * Math.cos(Math.PI*j/re);	
+				punto.x = 8 * Math.cos(Math.PI*i/re2)*Math.sin(Math.PI*j/re); 					
+		        	punto.z = 8 * Math.sin(Math.PI*i/re2)*Math.sin(Math.PI*j/re);
+				if( punto.y<= -1.85){
+					break;
+				}
+         		circleGeometry3.vertices.push(punto); 				
+  		   }
+ 		}
+         
+		var mater = new THREE.PointsMaterial({color:0xF82424, size: 0.05}); 
+		var circle = new THREE.Points(circleGeometry3, mater)
+		circle.position.y=30;
+		circle.position.z= -10;
+		circle.position.x=0;;
+		scene.add(circle);
+
+
+
+	////////////////////////////////////////////////////////////////////////////////////////		
+			camera.position.x = 100;
+			camera.position.y = 100;
+		  	camera.position.z = 30;
+			
+		  	camera.lookAt( origin );
+///////////////////////////////////////////////////////////////////////////////////////////////////
+                        camera2.position.x = 0;
+			camera2.position.y = 15;
+		  	camera2.position.z = 50;
+                        camera2.lookAt( 0,15,0 );
+
+                        camera4.position.x = 0;
+			camera4.position.y = 70;
+		  	camera4.position.z = 0;
+                        camera4.lookAt( 0,0,0 );
+
+                        camera5.position.x = 50;
+    			camera5.position.y = 15;
+		  	camera5.position.z = 0;
+                        camera5.lookAt( 0,15,0 );
+
+
+                        camera3.position.x = -50;
+			camera3.position.y = 45;
+		  	camera3.position.z = 50;
+                        camera3.lookAt( origin);
+  //////////////////////////////////////////////////////////////////////////////////
+            var effectController  = {
+                frustum: 6,
+                nearPlane: 1,
+                farPlane: 10,
+                aspect: w/h,
+             };
+             var matChanger = function( ) {
+                frustumSize = effectController.frustum;
+                aspect = effectController.aspect;
+                //camera2.frustum = frustumSize;
+                camera2.left   = - frustumSize * aspect / 2;
+                camera2.right  =   frustumSize * aspect / 2;
+                camera2.top    =   frustumSize / 2;
+                camera2.bottom = - frustumSize / 2;
+                camera2.near = effectController.nearPlane;
+                camera2.far = effectController.farPlane;
+
+                camera2.updateProjectionMatrix();
+                helper.update();
+            };
+            var gui = new dat.GUI();
+            gui.add( effectController, "frustum", 1, 100, 1 ).onChange( matChanger );
+            gui.add( effectController, "nearPlane", 0.1, 100, 0.1 ).onChange( matChanger );
+            gui.add( effectController, "farPlane", 0.1, 100, 1 ).onChange( matChanger );
+            gui.add( effectController, "aspect", 0.1, 10, 0.001 ).onChange( matChanger );
+ 
+            matChanger();
+//////////////////////
+             var effectController3  = {
+                frustum: 6,
+                nearPlane: 1,
+                farPlane: 10,
+                aspect: w/h,
+             };
+             var matChanger3 = function( ) {
+                frustumSize = effectController3.frustum;
+                aspect = effectController3.aspect;
+                //camera2.frustum = frustumSize;
+                camera4.left   = - frustumSize * aspect / 2;
+                camera4.right  =   frustumSize * aspect / 2;
+                camera4.top    =   frustumSize / 2;
+                camera4.bottom = - frustumSize / 2;
+                camera4.near = effectController3.nearPlane;
+                camera4.far = effectController3.farPlane;
+
+                camera4.updateProjectionMatrix();
+                helper3.update();
+            };
+            var gui = new dat.GUI();
+            gui.add( effectController3, "frustum", 1, 100, 1 ).onChange( matChanger3 );
+            gui.add( effectController3, "nearPlane", 0.1, 100, 0.1 ).onChange( matChanger3 );
+            gui.add( effectController3, "farPlane", 0.1, 100, 1 ).onChange( matChanger3 );
+            gui.add( effectController3, "aspect", 0.1, 10, 0.001 ).onChange( matChanger3 );
+ 
+            matChanger3();
+         
+                
+
+////////////////
+            var effectController4  = {
+                frustum: 6,
+                nearPlane: 1,
+                farPlane: 10,
+                aspect: w/h,
+             };
+             var matChanger4 = function( ) {
+                frustumSize = effectController4.frustum;
+                aspect = effectController4.aspect;
+                //camera2.frustum = frustumSize;
+                camera5.left   = - frustumSize * aspect / 2;
+                camera5.right  =   frustumSize* aspect / 2;
+                camera5.top    =   frustumSize / 2;
+                camera5.bottom = - frustumSize / 2;
+                camera5.near = effectController4.nearPlane;
+                camera5.far = effectController4.farPlane;
+
+                camera5.updateProjectionMatrix();
+                helper4.update();
+            };
+            var gui = new dat.GUI();
+            gui.add( effectController4, "frustum", 1, 100, 1 ).onChange( matChanger4 );
+            gui.add( effectController4, "nearPlane", 0.1, 100, 0.1 ).onChange( matChanger4 );
+            gui.add( effectController4, "farPlane", 0.1, 100, 1 ).onChange( matChanger4 );
+            gui.add( effectController4, "aspect", 0.1, 10, 0.001 ).onChange( matChanger4 );
+ 
+            matChanger4();
+
+
+/////////////
+
+              var effectController2  = {
+                fieldOfView: 45,
+                nearPlane: 1,
+                farPlane: 10,
+                aspect: w/h,
+            };
+              var matChanger2 = function( ) {
+                camera3.fov = effectController2.fieldOfView;
+                camera3.near = effectController2.nearPlane;
+                camera3.far = effectController2.farPlane;
+                camera3.aspect = effectController2.aspect;
+                camera3.updateProjectionMatrix();
+                helper2.update();
+            };
+            var gui2 = new dat.GUI();
+            gui2.add( effectController2, "fieldOfView", 1, 135, 1 ).onChange( matChanger2 );
+            gui2.add( effectController2, "nearPlane", 0.1, 100, 0.1 ).onChange( matChanger2 );
+            gui2.add( effectController2, "farPlane", 0.1, 100, 1 ).onChange( matChanger2 );
+            gui2.add( effectController2, "aspect", 0.1, 10, 0.001 ).onChange( matChanger2 );
+
+            matChanger2();
+            
+  /////////////////////////////////////////////////////////////////////////////////////////////          
+            
+//////////////////////////////////////////////////////////////////////////////////////////////////            
+            
+		}
+		function animate() {
+			requestAnimationFrame( animate );
+			controls.update(); // required if controls.enableDamping = true, or if controls.autoRotate = true
+			render();
+		}
+        function render() {
+            renderer.setViewport( 0, 0, 1920, 550 );
+            renderer.setScissor( 0, 0,1920, 550);
+            renderer.render( scene, camera );
+//////////////////////////////////////////////////////////////// CAMARAS ABAJO
+///////////////////////////////////////////////////////////////////ORTOGONAL
+            renderer.setViewport( 0, 550, 1.5*mapWidth, 1.8*mapHeight );
+            renderer.setScissor( 0,550, 1.5*mapWidth, 1.8*mapHeight );
+            renderer.setScissorTest( true );
+            renderer.render( scene, camera2 );
+///////////////////////////////////////////////////////////////// ORTOGONAL2
+            renderer.setViewport( 420, 550, 1.5*mapWidth, 1.8*mapHeight );
+            renderer.setScissor( 420,550, 1.5*mapWidth, 1.8*mapHeight );
+            renderer.setScissorTest( true );
+            renderer.render( scene, camera4 );
+////////////////////////////////////////////////////////////////////////////ORTOGONAL3
+            renderer.setViewport( 860, 550, 1.5*mapWidth, 1.8*mapHeight );
+            renderer.setScissor( 860,550, 1.5*mapWidth, 1.8*mapHeight );
+            renderer.setScissorTest( true );
+            renderer.render( scene, camera5 );
+
+//////////////////////////////////////////////////////////////// PERSPECTIVA
+            renderer.setViewport( 1300, 550, 2*mapWidth, 1.85*mapHeight );
+            renderer.setScissor( 1300,550, 2*mapWidth, 1.85*mapHeight );
+            renderer.setScissorTest( true );
+            renderer.render( scene, camera3 );
+		}
+    </script>
+  </body>
+</html>
